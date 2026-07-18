@@ -42,6 +42,12 @@ Complete guide for configuring Wazuh to send alerts to the AI-powered integratio
 - Officially supported by Wazuh
 - Automatic JSON formatting
 
+**⚠️ Not compatible with webhook authentication:** `/webhook` now requires an
+`X-Webhook-Secret` header (see [Security Best Practices](#security-best-practices)),
+and Wazuh's native `<integration><hook_url>` mechanism does not support
+sending custom headers. Use **Method 2** below instead, which can attach the
+header via `curl`.
+
 **Steps:**
 
 1. **SSH into Wazuh Manager container/server:**
@@ -97,7 +103,10 @@ For advanced filtering or pre-processing.
    WEBHOOK_URL="http://wazuh-integration:8002/webhook"
    ALERT_FILE="$1"
 
-   # Optional: Add custom headers, authentication, or filtering
+   # Must match WEBHOOK_SHARED_SECRET in the AI-SOC .env — required, /webhook
+   # rejects requests without a matching X-Webhook-Secret header.
+   WEBHOOK_SHARED_SECRET="CHANGE_ME_WebhookSharedSecret890!"
+
    RULE_LEVEL=$(jq -r '.rule.level' "$ALERT_FILE")
 
    # Only send if level >= 7
@@ -105,6 +114,7 @@ For advanced filtering or pre-processing.
        curl -X POST "$WEBHOOK_URL" \
          -H "Content-Type: application/json" \
          -H "X-Wazuh-Alert: true" \
+         -H "X-Webhook-Secret: $WEBHOOK_SHARED_SECRET" \
          --max-time 10 \
          --retry 3 \
          --retry-delay 2 \
@@ -528,9 +538,12 @@ Prevent overwhelming the service:
 
 1. **Use internal Docker network** (no external exposure)
 2. **Enable HTTPS** for production (add TLS termination proxy)
-3. **Implement authentication** (add API key validation)
+3. **Webhook authentication is enforced** — `/webhook` and `/alerts` require a
+   matching `X-Webhook-Secret` header (set via `WEBHOOK_SHARED_SECRET` in
+   `.env`). Requests without it are rejected with 401. Method 1 (native
+   `<integration><hook_url>`) cannot send this header — use Method 2.
 4. **Audit logs** regularly
-5. **Rotate API credentials** quarterly
+5. **Rotate API credentials** quarterly (including `WEBHOOK_SHARED_SECRET`)
 
 ## Integration with SOAR/TheHive
 

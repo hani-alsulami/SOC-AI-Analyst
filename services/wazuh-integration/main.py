@@ -5,11 +5,13 @@ AI-Augmented SOC
 FastAPI webhook receiver for Wazuh alerts with AI-powered triage and enrichment.
 """
 
+import hmac
 import structlog
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Header, Depends, status
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import Optional
 
 from config import get_settings
 from models import WazuhAlert, EnrichedAlert
@@ -60,10 +62,30 @@ app = FastAPI(
 )
 
 
+def verify_webhook_secret(x_webhook_secret: Optional[str] = Header(None)) -> None:
+    """
+    Require the shared secret configured for the Wazuh Manager integration
+    script. Without this, /webhook accepts alerts from any network-reachable
+    caller, which can be used to inject forged alerts into the pipeline that
+    feeds correlation and (if auto-response is enabled) real defensive
+    actions downstream.
+    """
+    settings = get_settings()
+    if x_webhook_secret is None or not hmac.compare_digest(
+        x_webhook_secret, settings.webhook_shared_secret
+    ):
+        logger.warning("webhook_auth_failed")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid X-Webhook-Secret header"
+        )
+
+
 @app.post(
     "/webhook",
     response_model=EnrichedAlert,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(verify_webhook_secret)],
     summary="Receive and analyze Wazuh alert",
     description="""
     Primary webhook endpoint for Wazuh alert integration.
@@ -206,6 +228,7 @@ async def receive_wazuh_alert(alert: WazuhAlert):
 
 @app.get(
     "/alerts",
+    dependencies=[Depends(verify_webhook_secret)],
     summary="Fetch recent alerts from Wazuh Manager",
     description="Query Wazuh Manager API for high-severity alerts and return enriched analysis"
 )

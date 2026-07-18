@@ -245,8 +245,10 @@ class TriggerPlanRequest(BaseModel):
 class ApproveActionRequest(BaseModel):
     """Request to approve or reject a pending action."""
     approved: bool = Field(..., description="True to approve, False to reject")
-    analyst_id: Optional[str] = Field(None, description="Analyst who made the decision")
     notes: Optional[str] = Field(None, description="Analyst notes")
+    # analyst_id is intentionally NOT accepted here — it's derived from the
+    # authenticated caller's token (see main.py approve_action), so a client
+    # can't spoof who approved a destructive action.
 
 
 class PlanSummary(BaseModel):

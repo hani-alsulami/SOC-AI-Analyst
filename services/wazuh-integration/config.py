@@ -20,7 +20,12 @@ class Settings(BaseSettings):
     wazuh_manager_url: str = "https://wazuh-manager:55000"
     wazuh_username: str = "wazuh-wui"
     wazuh_password: str  # Loaded from API_PASSWORD in .env
-    wazuh_verify_ssl: bool = False  # Self-signed cert
+    wazuh_verify_ssl: bool = True  # set WAZUH_VERIFY_SSL=false only for dev self-signed certs
+
+    # Shared secret the Wazuh Manager integration script must send as the
+    # X-Webhook-Secret header on every /webhook call. Required — no default,
+    # so the service fails fast at startup if it isn't configured.
+    webhook_shared_secret: str
 
     # Wazuh Alert Filtering
     min_severity: int = 7  # Minimum rule_level to process (7-15 = high priority)

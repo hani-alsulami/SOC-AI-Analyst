@@ -13,8 +13,6 @@ Date: 2025-10-23
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-from functools import wraps
-
 import jwt
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -371,7 +369,6 @@ def require_scopes(required_scopes: list[str]):
         Decorator function
     """
     def decorator(func):
-        @wraps(func)
         async def wrapper(*args, token_data: dict = Security(verify_api_key), **kwargs):
             user_scopes = token_data.get("scopes", [])
 
@@ -382,6 +379,14 @@ def require_scopes(required_scopes: list[str]):
                 )
 
             return await func(*args, **kwargs)
+
+        # Deliberately not using functools.wraps: it sets __wrapped__, and
+        # inspect.signature() (which FastAPI uses to build the dependency
+        # graph) follows __wrapped__ by default — that would hide the
+        # injected `token_data: Security(...)` parameter and FastAPI would
+        # never resolve/inject it. Copy just the display metadata instead.
+        wrapper.__name__ = func.__name__
+        wrapper.__doc__ = func.__doc__
         return wrapper
     return decorator
 

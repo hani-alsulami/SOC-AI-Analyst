@@ -18,11 +18,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for layer caching
-COPY requirements.txt .
+COPY response-orchestrator/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy application code (build context is services/, so this pulls in the
+# shared common/ package alongside this service's own files)
+COPY response-orchestrator/ .
+COPY common/ ./common/
 
 # Create non-root user for security
 RUN useradd -m -u 1000 orchuser && chown -R orchuser:orchuser /app

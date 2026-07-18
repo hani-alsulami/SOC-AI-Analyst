@@ -13,9 +13,9 @@ intelligence into action.
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import FastAPI, HTTPException, Query, Security, status
 from fastapi.responses import JSONResponse
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from starlette.responses import Response
@@ -28,6 +28,7 @@ from models import (
     VerificationResult,
 )
 from orchestrator import ResponseOrchestrator
+from common.auth import init_auth_manager, verify_api_key
 
 import httpx
 
@@ -90,6 +91,20 @@ async def lifespan(app: FastAPI):
     logger.info(
         "Starting %s v%s", settings.service_name, settings.service_version
     )
+
+    auth_manager = init_auth_manager(settings.jwt_secret_key)
+    # Register the bootstrap key so operators have a working credential on
+    # first deploy without a separate provisioning step. For real multi-analyst
+    # deployments, issue individual keys via auth_manager.generate_api_key()
+    # instead of sharing this one — it is registered in-memory only and does
+    # not survive a restart.
+    auth_manager.api_keys[settings.bootstrap_api_key] = {
+        "user_id": "bootstrap-admin",
+        "scopes": ["admin"],
+        "created_at": datetime.utcnow(),
+        "expires_at": datetime.utcnow().replace(year=datetime.utcnow().year + 10),
+        "is_active": True,
+    }
 
     await create_db_pool(settings.database_url)
     orchestrator = ResponseOrchestrator(settings)
@@ -216,7 +231,10 @@ async def health_check():
     summary="Trigger autonomous defense for an incident",
     status_code=status.HTTP_201_CREATED,
 )
-async def trigger_defense(request: TriggerPlanRequest):
+async def trigger_defense(
+    request: TriggerPlanRequest,
+    token_data: Dict[str, Any] = Security(verify_api_key),
+):
     """
     Trigger the full autonomous defense loop for an incident.
 
@@ -267,6 +285,7 @@ async def trigger_defense(request: TriggerPlanRequest):
 async def list_plans(
     status_filter: Optional[str] = Query(None, alias="status"),
     limit: int = Query(50, ge=1, le=200),
+    token_data: Dict[str, Any] = Security(verify_api_key),
 ):
     """List defense plans with optional status filter."""
     if not orchestrator:
@@ -299,7 +318,10 @@ async def list_plans(
     tags=["Defense"],
     summary="Get full defense plan details",
 )
-async def get_plan(plan_id: str):
+async def get_plan(
+    plan_id: str,
+    token_data: Dict[str, Any] = Security(verify_api_key),
+):
     """Get complete defense plan including all actions and verification results."""
     if not orchestrator:
         raise HTTPException(status_code=503, detail="Orchestrator not initialized")
@@ -319,7 +341,9 @@ async def get_plan(plan_id: str):
     tags=["Approval"],
     summary="List all pending approval requests",
 )
-async def list_pending_approvals():
+async def list_pending_approvals(
+    token_data: Dict[str, Any] = Security(verify_api_key),
+):
     """
     Get all defense actions across all plans that require human approval.
 
@@ -341,6 +365,7 @@ async def approve_action(
     plan_id: str,
     action_id: str,
     request: ApproveActionRequest,
+    token_data: Dict[str, Any] = Security(verify_api_key),
 ):
     """
     Approve or reject a defense action that requires human authorization.
@@ -351,12 +376,16 @@ async def approve_action(
     if not orchestrator:
         raise HTTPException(status_code=503, detail="Orchestrator not initialized")
 
+    # analyst_id comes from the verified token, not the request body — a
+    # client can't spoof who approved a destructive action.
+    analyst_id = token_data.get("user_id") or token_data.get("sub") or "unknown"
+
     try:
         action = await orchestrator.approve_action(
             plan_id=plan_id,
             action_id=action_id,
             approved=request.approved,
-            analyst_id=request.analyst_id,
+            analyst_id=analyst_id,
             notes=request.notes,
         )
         return action

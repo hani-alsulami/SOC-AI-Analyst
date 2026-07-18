@@ -129,6 +129,7 @@ services:
       - ALERT_TRIAGE_URL=http://alert-triage:8000
       - RAG_SERVICE_URL=http://rag-service:8000
       - API_PASSWORD=${API_PASSWORD}
+      - WEBHOOK_SHARED_SECRET=${WEBHOOK_SHARED_SECRET:?Set WEBHOOK_SHARED_SECRET in .env — this is the token the Wazuh Manager integration script must send}
     networks:
       - ai-network
       - siem-backend
@@ -289,8 +290,8 @@ services:
   # Response Orchestrator - Autonomous Adaptive Defense
   response-orchestrator:
     build:
-      context: ../services/response-orchestrator
-      dockerfile: Dockerfile
+      context: ../services
+      dockerfile: response-orchestrator/Dockerfile
     container_name: response-orchestrator
     hostname: response-orchestrator
     restart: unless-stopped
@@ -308,7 +309,9 @@ services:
       - ORCHESTRATOR_WAZUH_API_URL=https://wazuh-manager:55000
       - ORCHESTRATOR_WAZUH_API_USERNAME=wazuh-wui
       - ORCHESTRATOR_WAZUH_API_PASSWORD=${API_PASSWORD}
-      - ORCHESTRATOR_DRY_RUN_MODE=${ORCHESTRATOR_DRY_RUN:-false}
+      - ORCHESTRATOR_DRY_RUN_MODE=${ORCHESTRATOR_DRY_RUN:-true}
+      - ORCHESTRATOR_JWT_SECRET_KEY=${ORCHESTRATOR_JWT_SECRET_KEY:?Set ORCHESTRATOR_JWT_SECRET_KEY in .env (openssl rand -hex 32)}
+      - ORCHESTRATOR_BOOTSTRAP_API_KEY=${ORCHESTRATOR_BOOTSTRAP_API_KEY:?Set ORCHESTRATOR_BOOTSTRAP_API_KEY in .env}
     networks:
       - ai-network
       - siem-backend

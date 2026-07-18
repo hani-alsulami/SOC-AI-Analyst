@@ -79,6 +79,18 @@ def generate_all_credentials():
     print(f"  Password: {credentials['API_PASSWORD']}")
     print()
 
+    credentials["WEBHOOK_SHARED_SECRET"] = generate_base64_key(32)
+    print(f"Webhook Shared Secret (Wazuh -> wazuh-integration):")
+    print(f"  {credentials['WEBHOOK_SHARED_SECRET']}")
+    print()
+
+    credentials["ORCHESTRATOR_JWT_SECRET_KEY"] = secrets.token_hex(32)
+    credentials["ORCHESTRATOR_BOOTSTRAP_API_KEY"] = generate_api_key("aisoc-orch")
+    print(f"Response Orchestrator Auth:")
+    print(f"  JWT Secret:    {credentials['ORCHESTRATOR_JWT_SECRET_KEY']}")
+    print(f"  Bootstrap Key: {credentials['ORCHESTRATOR_BOOTSTRAP_API_KEY']}")
+    print()
+
     # ========================================================================
     # Database Credentials
     # ========================================================================
@@ -223,7 +235,12 @@ def write_env_file(credentials, output_path=".env.production"):
         f.write(f"INDEXER_USERNAME={credentials['INDEXER_USERNAME']}\n")
         f.write(f"INDEXER_PASSWORD={credentials['INDEXER_PASSWORD']}\n")
         f.write(f"API_USERNAME={credentials['API_USERNAME']}\n")
-        f.write(f"API_PASSWORD={credentials['API_PASSWORD']}\n\n")
+        f.write(f"API_PASSWORD={credentials['API_PASSWORD']}\n")
+        f.write(f"WEBHOOK_SHARED_SECRET={credentials['WEBHOOK_SHARED_SECRET']}\n\n")
+
+        f.write("# Response Orchestrator Auth\n")
+        f.write(f"ORCHESTRATOR_JWT_SECRET_KEY={credentials['ORCHESTRATOR_JWT_SECRET_KEY']}\n")
+        f.write(f"ORCHESTRATOR_BOOTSTRAP_API_KEY={credentials['ORCHESTRATOR_BOOTSTRAP_API_KEY']}\n\n")
 
         f.write("# Database Credentials\n")
         f.write(f"POSTGRES_USER={credentials['POSTGRES_USER']}\n")

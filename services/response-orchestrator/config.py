@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     critical_asset_always_requires_approval: bool = True
     dry_run_mode: bool = True  # Global safety net: no actions are actually executed until explicitly disabled
 
+    # Auth — required, no default, so the service refuses to start without
+    # real secrets configured rather than silently running unauthenticated.
+    jwt_secret_key: str  # 32+ chars, e.g. `openssl rand -hex 32`
+    bootstrap_api_key: str  # Static API key registered at startup for initial access
+
     # Logging / Server
     log_level: str = "INFO"
     host: str = "0.0.0.0"
