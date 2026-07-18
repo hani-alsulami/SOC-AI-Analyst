@@ -4,15 +4,18 @@ version: '3.8'
 # AI-SOC Integrated Stack
 # ============================================================================
 #
-# Complete, production-ready AI-SOC deployment with full integration:
-# - API Gateway (unified entry point)
-# - ML Inference (IDS prediction)
-# - Alert Triage (LLM analysis)
-# - RAG Service (knowledge retrieval)
-# - Webhook Handler (integration orchestration)
-# - Redis (message queue & caching)
-# - ChromaDB (vector database)
-# - Ollama (LLM inference)
+# AI services standalone deployment (ML inference, alert triage, RAG,
+# Redis, ChromaDB, Ollama), rebuilt from source. Useful for running/testing
+# the AI layer without the full SIEM/SOAR stacks.
+#
+# For a normal end-to-end deployment, prefer docker-compose/ai-services.yml
+# (used together with phase1-siem-core.yml) — see deploy-ai-soc.sh.
+#
+# ⚠️  api-gateway and webhook-handler below are NOT IMPLEMENTED. They build
+# from services/gateway and services/webhooks, which do not exist in this
+# repository — they're gated behind the "gateway" Compose profile so a
+# plain `docker compose up` does not try to build them. Enable that profile
+# only once those services exist, or remove the two blocks entirely.
 #
 # Author: HOLLOWED_EYES
 # Mission: OPERATION PIPELINE-INTEGRATION
@@ -21,8 +24,11 @@ version: '3.8'
 services:
   # ==========================================================================
   # API Gateway - Unified Entry Point
+  # NOT IMPLEMENTED: services/gateway does not exist yet. Gated behind the
+  # "gateway" profile — run with `--profile gateway` once it's built.
   # ==========================================================================
   api-gateway:
+    profiles: ["gateway"]
     build:
       context: ../services/gateway
       dockerfile: Dockerfile
@@ -62,8 +68,11 @@ services:
 
   # ==========================================================================
   # Webhook Handler - Integration Orchestration
+  # NOT IMPLEMENTED: services/webhooks does not exist yet. Gated behind the
+  # "gateway" profile — run with `--profile gateway` once it's built.
   # ==========================================================================
   webhook-handler:
+    profiles: ["gateway"]
     build:
       context: ../services/webhooks
       dockerfile: Dockerfile
@@ -135,7 +144,9 @@ services:
   # Alert Triage Service - LLM Analysis
   # ==========================================================================
   alert-triage:
-    image: alert-triage:latest
+    build:
+      context: ../services/alert-triage
+      dockerfile: Dockerfile
     container_name: alert-triage
     hostname: alert-triage
     restart: unless-stopped
@@ -178,7 +189,9 @@ services:
   # RAG Service - Knowledge Retrieval
   # ==========================================================================
   rag-service:
-    image: rag-service:latest
+    build:
+      context: ../services/rag-service
+      dockerfile: Dockerfile
     container_name: rag-service
     hostname: rag-service
     restart: unless-stopped
@@ -242,7 +255,7 @@ services:
   # ChromaDB - Vector Database
   # ==========================================================================
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.5.5  # Pinned for reproducibility
     container_name: chromadb
     hostname: chromadb
     restart: unless-stopped
@@ -273,7 +286,7 @@ services:
   # Ollama - LLM Inference Server
   # ==========================================================================
   ollama-server:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.3.14  # Pinned for reproducibility
     container_name: ollama-server
     hostname: ollama-server
     restart: unless-stopped
@@ -345,27 +358,28 @@ volumes:
 # Deployment Instructions
 # ============================================================================
 #
-# 1. Build required images:
-#    docker compose -f docker-compose/ai-services.yml build
-#
-# 2. Deploy integrated stack:
+# 1. Deploy the AI services (builds ml-inference, alert-triage, rag-service
+#    from source; requires siem-frontend/soar-frontend external networks if
+#    you also run those stacks — otherwise remove those two network entries
+#    below):
 #    docker compose -f docker-compose/integrated-stack.yml up -d
 #
-# 3. Pull Ollama model (first time):
+# 2. Pull Ollama model (first time):
 #    docker exec -it ollama-server ollama pull llama3.1:8b
 #
-# 4. Verify deployment:
+# 3. Verify deployment:
 #    docker compose -f docker-compose/integrated-stack.yml ps
-#    curl http://localhost:8888/health
+#    curl http://localhost:8100/health
 #
-# 5. Access services:
-#    - API Gateway: http://localhost:8888
+# 4. Access services:
 #    - ML Inference: http://localhost:8500/docs
 #    - Alert Triage: http://localhost:8100/docs
 #    - RAG Service: http://localhost:8300/docs
-#    - Webhook Handler: http://localhost:8090/docs
 #    - Ollama API: http://localhost:11434/api/tags
 #    - Redis: localhost:6379
 #    - ChromaDB: http://localhost:8200
+#
+# api-gateway and webhook-handler are NOT IMPLEMENTED (see warning at top of
+# this file) and are excluded unless you run with `--profile gateway`.
 #
 # ============================================================================

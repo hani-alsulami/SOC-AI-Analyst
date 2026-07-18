@@ -365,7 +365,7 @@ function Invoke-HealthCheck {
         "RAG Service"      = "http://localhost:8300/health"
         "Wazuh Integration"= "http://localhost:8002/health"
         "Prometheus"       = "http://localhost:9090/-/healthy"
-        "Grafana"          = "http://localhost:3001/api/health"
+        "Grafana"          = "http://localhost:3000/api/health"
     }
 
     $allOk = $true
@@ -405,7 +405,7 @@ function Print-AccessUrls {
     Write-Host "  Wazuh Integration:   http://localhost:8002/docs" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Monitoring:" -ForegroundColor White
-    Write-Host "  Grafana:             http://localhost:3001  (admin/admin)" -ForegroundColor Cyan
+    Write-Host "  Grafana:             http://localhost:3000  (see GRAFANA_ADMIN_USER/PASSWORD in .env)" -ForegroundColor Cyan
     Write-Host "  Prometheus:          http://localhost:9090" -ForegroundColor Cyan
     Write-Host "  Alertmanager:        http://localhost:9093" -ForegroundColor Cyan
     Write-Host ""

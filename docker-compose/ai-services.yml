@@ -1,7 +1,8 @@
 services:
   # Ollama LLM Server
+  # Pinned for reproducibility — bump deliberately, don't float on :latest.
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.3.14
     container_name: ollama
     hostname: ollama
     restart: unless-stopped
@@ -338,8 +339,9 @@ services:
           cpus: '0.25'
 
   # ChromaDB
+  # Pinned for reproducibility — bump deliberately, don't float on :latest.
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.5.5
     container_name: chromadb
     hostname: chromadb
     restart: unless-stopped
@@ -361,9 +363,12 @@ networks:
     ipam:
       config:
         - subnet: 172.35.0.0/24
+  # Matches the fixed `name: siem-backend` set in phase1-siem-core.yml —
+  # NOT a compose-project-prefixed name, so this works regardless of what
+  # directory/project name phase1-siem-core.yml was deployed under.
   siem-backend:
     external: true
-    name: docker-compose_siem-backend
+    name: siem-backend
 
 volumes:
   ollama-data:

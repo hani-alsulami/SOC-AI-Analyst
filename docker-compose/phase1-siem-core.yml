@@ -329,7 +329,11 @@ services:
 # ==============================================================================
 networks:
   # Backend network: Internal service communication
+  # Fixed `name:` so other compose files (ai-services.yml, integrated-stack.yml)
+  # can reference this network as `external: true` with a name that doesn't
+  # depend on this project's compose project name / invocation cwd.
   siem-backend:
+    name: siem-backend
     driver: bridge
     ipam:
       config:
@@ -337,6 +341,7 @@ networks:
 
   # Frontend network: User-facing services
   siem-frontend:
+    name: siem-frontend
     driver: bridge
     ipam:
       config:

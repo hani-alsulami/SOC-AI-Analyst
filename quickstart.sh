@@ -147,22 +147,10 @@ else
     fi
 fi
 
-# Deploy AI Services first (fastest to start)
-echo -e "\n${CYAN}→${NC} Deploying AI Services..."
-docker compose -f "$COMPOSE_DIR/ai-services.yml" up -d
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓${NC} AI Services containers launched"
-else
-    echo -e "${RED}✗${NC} Failed to launch AI Services"
-    echo -e "${YELLOW}→${NC} Check logs: docker compose -f $COMPOSE_DIR/ai-services.yml logs"
-    exit 1
-fi
-
-# Wait a bit for AI services to initialize
-echo -e "${CYAN}→${NC} Waiting for AI services to initialize..."
-sleep 5
-
-# Deploy SIEM Stack
+# Deploy SIEM Stack first — it owns the siem-backend/siem-frontend networks
+# that ai-services.yml attaches to as `external: true`. Deploying AI Services
+# first would fail with "network siem-backend not found" on a fresh
+# environment.
 echo -e "\n${CYAN}→${NC} Deploying Wazuh SIEM..."
 echo -e "${YELLOW}Note:${NC} SIEM services take 2-3 minutes to initialize. Please be patient..."
 
@@ -178,6 +166,21 @@ fi
 # Give SIEM services time to start health checks
 echo -e "${CYAN}→${NC} Waiting for SIEM services to initialize (this takes 2-3 minutes)..."
 sleep 10
+
+# Deploy AI Services now that siem-backend/siem-frontend exist
+echo -e "\n${CYAN}→${NC} Deploying AI Services..."
+docker compose -f "$COMPOSE_DIR/ai-services.yml" up -d
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✓${NC} AI Services containers launched"
+else
+    echo -e "${RED}✗${NC} Failed to launch AI Services"
+    echo -e "${YELLOW}→${NC} Check logs: docker compose -f $COMPOSE_DIR/ai-services.yml logs"
+    exit 1
+fi
+
+# Wait a bit for AI services to initialize
+echo -e "${CYAN}→${NC} Waiting for AI services to initialize..."
+sleep 5
 
 # ============================================================================
 # VALIDATION FUNCTIONS

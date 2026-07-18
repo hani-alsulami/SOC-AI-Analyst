@@ -417,13 +417,17 @@ services:
 # NETWORKS
 # ==============================================================================
 networks:
+  # Fixed `name:` so other compose files can reference these as `external: true`
+  # by a name that doesn't depend on this project's compose project name.
   soar-backend:
+    name: soar-backend
     driver: bridge
     ipam:
       config:
         - subnet: ${SOAR_BACKEND_SUBNET:-172.26.0.0/24}
 
   soar-frontend:
+    name: soar-frontend
     driver: bridge
     ipam:
       config:

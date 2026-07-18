@@ -36,10 +36,9 @@ check_untyped_defs = true
 module = "tests.*"
 ignore_errors = true
 
-[tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra -q --strict-markers"
-testpaths = ["tests"]
+# Pytest configuration lives in pytest.ini, not here — pytest.ini takes
+# precedence over [tool.pytest.ini_options] when both exist, so a duplicate
+# (and drifting) block here would be silently ignored.
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

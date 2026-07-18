@@ -201,6 +201,15 @@ KIBANA_PASSWORD=SecurePassword1!
 ENVEOF
         ok "Minimal .env created."
     fi
+
+    # Docker Compose V2 loads .env from the project directory (the directory
+    # of the -f compose file), not from this script's directory or the
+    # invoking shell's cwd — without this copy, every ${VAR:?...} required
+    # variable in docker-compose/*.yml resolves empty and the deploy fails.
+    if [[ -f "$env_file" ]]; then
+        cp "$env_file" "$COMPOSE_DIR/.env"
+        ok "Copied .env to $COMPOSE_DIR (required for Compose variable interpolation)."
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -388,7 +397,7 @@ health_check() {
         ["RAG Service"]="http://localhost:8300/health"
         ["Wazuh Integration"]="http://localhost:8002/health"
         ["Prometheus"]="http://localhost:9090/-/healthy"
-        ["Grafana"]="http://localhost:3001/api/health"
+        ["Grafana"]="http://localhost:3000/api/health"
     )
 
     local all_ok=true
@@ -422,7 +431,7 @@ print_access_urls() {
     echo -e "  Wazuh Integration:   ${CYAN}http://localhost:8002/docs${RESET}"
     echo ""
     echo -e "${BOLD}Monitoring:${RESET}"
-    echo -e "  Grafana:             ${CYAN}http://localhost:3001${RESET} (admin/admin)"
+    echo -e "  Grafana:             ${CYAN}http://localhost:3000${RESET} (see GRAFANA_ADMIN_USER/PASSWORD in .env)"
     echo -e "  Prometheus:          ${CYAN}http://localhost:9090${RESET}"
     echo -e "  Alertmanager:        ${CYAN}http://localhost:9093${RESET}"
     echo ""
