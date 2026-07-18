@@ -9,7 +9,7 @@ This is a variant of the main [AI-SOC](../README.md) project, re-targeted at an 
 - ArcSight ESM keeps generating and correlating alerts, and keeps pushing them into TheHive 3.x exactly like it does today (existing push script, untouched).
 - Cortex keeps doing enrichment exactly like it does today (existing analyzers, untouched).
 - This project adds three things *on top*, all installed on the existing Cortex host:
-  - **AI-SOC Triage Analyzer** — LLM-based severity/MITRE assessment with RAG context, callable on any observable/case the same way analysts already run Cortex analyzers.
+  - **AI-SOC Triage Analyzer** — LLM-based severity/MITRE assessment, run on a case (via a case-ID observable, since TheHive 3.x has no whole-case analyzer trigger). RAG context is a planned enhancement, not wired up yet.
   - **AI-SOC IDS Analyzer** — ML classification (BENIGN/ATTACK) for network-flow observables.
   - **AI-SOC Responder** — D3FEND-mapped response actions (firewall/EDR/identity), analyst-triggered only. No automatic execution, ever.
 - A small **Correlation Service** polls TheHive's API for new/updated cases, builds a kill-chain/risk view across them, and writes it back as a case custom field or comment.
@@ -69,7 +69,7 @@ flowchart TB
 
 | Component | Status | Notes |
 |---|---|---|
-| AI-SOC Triage Analyzer | Planned | Adapts `alert-triage` + `rag-service` from the main AI-SOC project into a single Cortex analyzer |
+| AI-SOC Triage Analyzer | Implemented (v1) | [`analyzers/AI_SOC_Triage`](analyzers/AI_SOC_Triage) — LLM severity/MITRE triage, tested against mocked TheHive + Ollama. RAG context not wired up yet (see its README's Known Limitations). |
 | AI-SOC IDS Analyzer | Planned | Adapts `ml_training/inference_api.py` |
 | Correlation Service | Planned | Adapts `correlation-engine`; polls TheHive 3.x API today, webhook-ready for a future TheHive 4/5 upgrade |
 | AI-SOC Responder | Planned | Adapts `response-orchestrator`'s D3FEND mapping; firewall/EDR/identity adapters remain stubs until real vendor integrations are wired in |

@@ -1,0 +1,58 @@
+{
+  "name": "AI_SOC_Triage",
+  "version": "1.0",
+  "author": "SOC-AI-Analyst",
+  "url": "https://github.com/hani-alsulami/SOC-AI-Analyst/tree/main/cortex-integration/analyzers/AI_SOC_Triage",
+  "license": "Apache-2.0",
+  "description": "LLM-based severity and MITRE ATT&CK triage for a TheHive case, using a local Ollama model only.",
+  "dataTypeList": ["other"],
+  "command": "AI_SOC_Triage/ai_soc_triage.py",
+  "baseConfig": "AI_SOC_Triage",
+  "config": {
+    "check_tlp": false,
+    "max_tlp": 3,
+    "check_pap": false,
+    "max_pap": 3,
+    "auto_extract": false
+  },
+  "configurationItems": [
+    {
+      "name": "thehive_url",
+      "description": "Base URL of the TheHive instance, e.g. http://thehive:9000",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "thehive_apikey",
+      "description": "TheHive API key used to fetch case details",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "ollama_host",
+      "description": "Base URL of the local Ollama server",
+      "type": "string",
+      "multi": false,
+      "required": false,
+      "defaultValue": "http://localhost:11434"
+    },
+    {
+      "name": "ollama_model",
+      "description": "Ollama model tag to use for triage",
+      "type": "string",
+      "multi": false,
+      "required": false,
+      "defaultValue": "llama3.1:8b"
+    },
+    {
+      "name": "ollama_timeout_seconds",
+      "description": "Timeout for the Ollama generate call, in seconds",
+      "type": "number",
+      "multi": false,
+      "required": false,
+      "defaultValue": 180
+    }
+  ]
+}
