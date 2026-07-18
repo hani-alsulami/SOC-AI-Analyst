@@ -82,6 +82,11 @@ flowchart TB
 - Alert volume: ~80/day — Correlation Service polls TheHive every 1-2 minutes with comfortable headroom
 - Expected LLM triage latency: ~1-2 minutes per alert on CPU inference — acceptable for background enrichment, not a live chat path
 
+## Dependencies
+
+- **[thehive4py](https://github.com/TheHive-Project/TheHive4py) `1.8.2`**, vendored under [`vendor/thehive4py`](vendor/thehive4py) for reference. This is the last release compatible with TheHive 3/4 — the current upstream `main` branch is `2.x`, a full rewrite that **only supports TheHive 5** and will not talk to a 3.x instance. Don't upgrade this dependency without confirming TheHive itself has been upgraded first.
+- **License note**: `thehive4py` is AGPL-3.0-licensed (unlike the rest of this repo, which is Apache 2.0). It's vendored here as reference/documentation, not linked into our code — the Correlation Service should depend on it via `pip install thehive4py==1.8.2` at runtime rather than importing the vendored copy directly, to keep the licensing boundary clean.
+
 ## Open Items
 
 - ArcSight ESM alert volume and TheHive 3.x API rate limits — confirm before finalizing the Correlation Service polling interval
