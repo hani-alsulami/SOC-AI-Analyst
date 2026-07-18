@@ -48,9 +48,12 @@ This is not a drop-in production SOC. It is a substantial research implementatio
 
 ## Architecture
 
+Trust boundaries are marked explicitly on the diagram: 🔒 edges require authentication (a shared secret or bearer token) and reject unauthenticated callers. Everything else is internal, unauthenticated service-to-service traffic on the Docker network.
+
 ```mermaid
 flowchart TB
-    events["Security Events and Network Flow Data"]
+    events(["Security Events and Network Flow Data"])
+    analyst(["SOC Analyst"])
 
     subgraph collect["Detection and Collection"]
         wazuh["Wazuh SIEM"]
@@ -62,7 +65,7 @@ flowchart TB
     integration["Wazuh Integration :8002<br/>Webhook receiver, alert routing, enrichment"]
 
     subgraph analysis["AI Analysis Layer"]
-        triage["Alert Triage :8100<br/>Local LLM analysis<br/>ML-aware confidence<br/>Async worker pool"]
+        triage["Alert Triage :8100<br/>Local LLM analysis<br/>ML-aware confidence<br/>Async worker pool + circuit breaker"]
         rag["RAG Service :8300<br/>MITRE, CVE, runbooks<br/>ChromaDB vector store"]
         ml["ML Inference :8500<br/>Random Forest, XGBoost, Decision Tree<br/>77 CICIDS2017 features"]
     end
@@ -78,7 +81,7 @@ flowchart TB
         swarm["Attack-Campaign Simulator<br/>Attacker and defender archetypes<br/>Monte Carlo swarm runs"]
     end
 
-    orchestrator["Response Orchestrator :8800<br/>D3FEND countermeasures<br/>Approval tiers<br/>Adapter execution<br/>Verification by re-simulation and monitoring"]
+    orchestrator["🔒 Response Orchestrator :8800<br/>D3FEND countermeasures · approval tiers<br/>dry_run + auto_execute=false by default<br/>Verification by re-simulation and monitoring"]
 
     subgraph observe["Observability"]
         prometheus["Prometheus"]
@@ -88,7 +91,7 @@ flowchart TB
     end
 
     events --> collect
-    collect --> integration
+    collect -- "POST /webhook<br/>🔒 X-Webhook-Secret" --> integration
     integration --> triage
     integration --> rag
     triage <--> rag
@@ -101,7 +104,8 @@ flowchart TB
     integration --> correlation
     correlation --> swarm
     swarm --> correlation
-    correlation --> orchestrator
+    correlation -- "POST /defend<br/>🔒 Bearer token" --> orchestrator
+    analyst -- "POST .../approve<br/>🔒 Bearer token<br/>identity from the verified token" --> orchestrator
     orchestrator --> rules
     orchestrator --> feedback
     orchestrator --> swarm
@@ -114,7 +118,34 @@ flowchart TB
     prometheus --> grafana
     prometheus --> alertmanager
     integration -. logs .-> loki
+
+    classDef collectStyle fill:#3b5bdb,stroke:#26408a,color:#fff
+    classDef integrationStyle fill:#2f9e91,stroke:#1f6b62,color:#fff
+    classDef analysisStyle fill:#0f9d97,stroke:#0a6b67,color:#fff
+    classDef memoryStyle fill:#7c5cbf,stroke:#523d80,color:#fff
+    classDef incidentsStyle fill:#d97706,stroke:#985404,color:#fff
+    classDef orchestratorStyle fill:#dc2626,stroke:#7f1d1d,color:#fff,stroke-width:2px
+    classDef observeStyle fill:#64748b,stroke:#3f4a58,color:#fff
+    classDef eventStyle fill:#e2e8f0,stroke:#94a3b8,color:#111
+
+    class wazuh,suricata,zeek,filebeat collectStyle
+    class integration integrationStyle
+    class triage,rag,ml analysisStyle
+    class feedback,retraining,rules memoryStyle
+    class correlation,swarm incidentsStyle
+    class orchestrator orchestratorStyle
+    class prometheus,grafana,alertmanager,loki observeStyle
+    class events,analyst eventStyle
 ```
+
+| Color | Layer | Notes |
+|---|---|---|
+| 🟦 blue | Detection and Collection | Wazuh, Suricata, Zeek, Filebeat |
+| 🟩 teal | Wazuh Integration / AI Analysis | Webhook receiver, LLM triage, RAG, ML inference |
+| 🟪 purple | Learning and Knowledge | Feedback capture, retraining, rule generation |
+| 🟧 orange | Incident Intelligence | Correlation, kill-chain state, attack simulation |
+| 🟥 red | Response Orchestrator | The only node that can trigger real defensive actions — always behind 🔒 |
+| ⬜ gray | Observability | Prometheus, Grafana, Alertmanager, Loki |
 
 ## Repository Layout
 
@@ -480,10 +511,10 @@ AI-SOC is built for a lab/research environment unless hardened further.
 
 Before production-like use:
 
-- Replace every default password in `.env`
+- Replace every default password in `.env` — `docker-compose/*.yml` now fails fast on startup if these are left unset
 - Keep `.env`, generated certificates, and credentials out of git
 - Enable TLS where services communicate across hosts
-- Add API authentication to exposed service endpoints
+- `wazuh-integration` and `response-orchestrator` now require authentication (`X-Webhook-Secret` / bearer token) — replace the single `ORCHESTRATOR_BOOTSTRAP_API_KEY` with per-analyst API keys before multi-analyst use
 - Review container network boundaries and host-network sensor settings
 - Replace response-action stubs with audited vendor integrations
 - Validate LLM output before using it for automated action
