@@ -9,6 +9,7 @@ Manages ingestion of security knowledge bases:
 - Security runbooks
 """
 
+import asyncio
 import logging
 import json
 import time
@@ -188,15 +189,7 @@ Data Sources: {', '.join(data_sources)}"""
             }
 
             try:
-                self._nvd_rate_limit()
-                response = requests.get(
-                    NVD_API_URL,
-                    params=params,
-                    timeout=30,
-                    headers={"Accept": "application/json"}
-                )
-                response.raise_for_status()
-                data = response.json()
+                data = await asyncio.to_thread(self._fetch_nvd_page, params)
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to fetch {severity} CVEs: {e}")
                 errors.append(str(e))
@@ -216,15 +209,7 @@ Data Sources: {', '.join(data_sources)}"""
                 params["startIndex"] = start_index
 
                 try:
-                    self._nvd_rate_limit()
-                    response = requests.get(
-                        NVD_API_URL,
-                        params=params,
-                        timeout=30,
-                        headers={"Accept": "application/json"}
-                    )
-                    response.raise_for_status()
-                    page_data = response.json()
+                    page_data = await asyncio.to_thread(self._fetch_nvd_page, params)
                     page_cves = self._parse_nvd_response(page_data, severity)
                     all_cves.extend(page_cves)
                     logger.info(f"Fetched page {page + 1}/{max_pages} for {severity} CVEs ({len(all_cves)} total)")
@@ -287,6 +272,25 @@ Data Sources: {', '.join(data_sources)}"""
             time.sleep(NVD_REQUEST_DELAY)
 
         self._nvd_request_count += 1
+
+    def _fetch_nvd_page(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Synchronous rate-limit + fetch for a single NVD API page.
+
+        Runs off the event loop via asyncio.to_thread — _nvd_rate_limit()
+        uses time.sleep() and requests.get() is blocking, so calling this
+        directly from an async function would stall the whole event loop
+        (including health checks) for the duration of the sleep/request.
+        """
+        self._nvd_rate_limit()
+        response = requests.get(
+            NVD_API_URL,
+            params=params,
+            timeout=30,
+            headers={"Accept": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
 
     def _parse_nvd_response(self, data: Dict[str, Any], severity: str) -> List[Dict[str, Any]]:
         """

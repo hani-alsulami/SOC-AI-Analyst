@@ -235,6 +235,16 @@ async def predict(flow: NetworkFlow):
             detail=f"Model '{model_name}' not available. Choose from: {list(models.keys())}"
         )
 
+    # Validate supporting artifacts loaded (load_models() only requires a model
+    # to succeed; scaler/label_encoder/feature_names can be None if their pickle
+    # failed to load)
+    if feature_names is None or label_encoder is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Model artifacts not fully loaded (missing feature_names or label_encoder). "
+                   "Call /models/reload or check server logs."
+        )
+
     # Validate feature count
     if len(flow.features) != len(feature_names):
         raise HTTPException(
@@ -305,6 +315,14 @@ async def predict_batch(flows: List[NetworkFlow]):
             status_code=400,
             detail="Batch size limited to 1000 flows"
         )
+
+    if not flows:
+        return {
+            "total_predictions": 0,
+            "total_time_ms": 0.0,
+            "avg_time_per_prediction_ms": 0.0,
+            "results": []
+        }
 
     start_time = time.time()
     results = []

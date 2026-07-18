@@ -19,7 +19,10 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 from starlette.responses import Response
 
 from config import settings
-from models import SecurityAlert, TriageResponse, HealthResponse
+from models import (
+    SecurityAlert, TriageResponse, HealthResponse,
+    SeverityLevel, AlertCategory, TriageRecommendation,
+)
 from llm_client import OllamaClient
 from worker_pool import WorkerPool
 
@@ -77,8 +80,60 @@ async def lifespan(app: FastAPI):
         alert = SecurityAlert(**alert_data)
         return await llm_client.analyze_alert(alert)
 
+    async def _ml_only_from_dict(alert_data: dict):
+        """Circuit-breaker fast path: skip the LLM call under queue pressure
+        and return a lightweight assessment from the ML model alone. Falls
+        back to full LLM analysis if no ML signal is available at all."""
+        alert = SecurityAlert(**alert_data)
+        ml_prediction = None
+        if settings.ml_enabled:
+            ml_prediction = await llm_client.ml_client.predict_with_fallback(alert)
+
+        if ml_prediction is None:
+            logger.warning(
+                f"Circuit breaker: no ML signal for {alert.alert_id}, "
+                "falling back to full LLM analysis"
+            )
+            return await llm_client.analyze_alert(alert)
+
+        is_attack = ml_prediction.prediction.upper() != "BENIGN"
+        severity = SeverityLevel.HIGH if (is_attack and ml_prediction.confidence >= 0.7) else (
+            SeverityLevel.MEDIUM if is_attack else SeverityLevel.INFO
+        )
+        return TriageResponse(
+            alert_id=alert.alert_id,
+            severity=severity,
+            category=AlertCategory.ANOMALY if is_attack else AlertCategory.OTHER,
+            confidence=ml_prediction.confidence,
+            summary=(
+                f"ML-only fast-path assessment (LLM skipped under queue pressure): "
+                f"{ml_prediction.prediction} (confidence {ml_prediction.confidence:.0%})"
+            ),
+            detailed_analysis=(
+                "This alert was processed via the circuit breaker: the analysis "
+                "queue was deep, so LLM triage was skipped in favor of the raw "
+                f"ML model prediction from {ml_prediction.model_used}. Re-run "
+                "full LLM triage manually if deeper analysis is needed."
+            ),
+            potential_impact="Not assessed — ML-only fast path, re-triage for impact analysis.",
+            is_true_positive=is_attack,
+            false_positive_reason=None if is_attack else "ML model classified as benign",
+            recommendations=[
+                TriageRecommendation(
+                    action="Re-run full LLM triage if this alert requires deeper analysis",
+                    priority=3,
+                    rationale="Circuit breaker skipped LLM analysis under load",
+                )
+            ],
+            investigation_priority=3 if is_attack else 5,
+            model_used=f"ml-only-circuit-breaker:{ml_prediction.model_used}",
+            ml_prediction=ml_prediction.prediction,
+            ml_confidence=ml_prediction.confidence,
+        )
+
     worker_pool = WorkerPool(
         analyze_fn=_analyze_from_dict,
+        ml_only_fn=_ml_only_from_dict,
         worker_count=settings.worker_count,
         queue_threshold=settings.queue_threshold,
         circuit_breaker_enabled=settings.circuit_breaker_enabled,

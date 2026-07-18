@@ -38,7 +38,7 @@ import xgboost as xgb
 warnings.filterwarnings('ignore')
 
 # Constants
-PROJECT_ROOT = Path(r"C:\Users\Abdul\Desktop\Bari 2025 Portfolio\AI_SOC")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATASET_PATH = PROJECT_ROOT / "datasets" / "CICIDS2017" / "raw"
 MODEL_PATH = PROJECT_ROOT / "models"
 EVAL_PATH = PROJECT_ROOT / "evaluation"

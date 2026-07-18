@@ -544,9 +544,12 @@ class AlertPipeline:
     def _should_create_case(self, triage_result: Dict[str, Any]) -> bool:
         """Determine if case should be created based on severity"""
         severity = triage_result.get("severity", "medium")
-        threshold_order = ["info", "low", "medium", "high", "critical"]
+        threshold_order = ["informational", "low", "medium", "high", "critical"]
 
         threshold_idx = threshold_order.index(self.thehive_threshold)
+        if severity not in threshold_order:
+            logger.warning(f"Unknown severity '{severity}' in triage result, defaulting to 'medium'")
+            severity = "medium"
         severity_idx = threshold_order.index(severity)
 
         return severity_idx >= threshold_idx

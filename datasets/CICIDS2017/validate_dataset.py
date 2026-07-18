@@ -48,7 +48,7 @@ def analyze_csv_file(filepath):
     }
 
 def main():
-    raw_dir = Path(r"C:\Users\Abdul\Desktop\Bari 2025 Portfolio\AI_SOC\datasets\CICIDS2017\raw")
+    raw_dir = Path(__file__).resolve().parent / "raw"
     csv_files = sorted(raw_dir.glob("*-WorkingHours.csv"))
 
     if not csv_files:

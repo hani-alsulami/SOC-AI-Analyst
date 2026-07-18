@@ -184,6 +184,7 @@ class RiskScorer:
                         host_meta[ip_part] = {"hostname": hostname_part, "criticality": "medium"}
 
             # Process per-agent campaigns
+            report_compromised_ips: set = set()
             for camp in report.get("campaigns", []):
                 archetype = camp.get("archetype", "unknown")
                 compromised_ips = camp.get("hosts_compromised", [])
@@ -191,6 +192,7 @@ class RiskScorer:
 
                 for ip in compromised_ips:
                     compromise_count[ip] += 1
+                    report_compromised_ips.add(ip)
                     host_archetypes[ip][archetype] += 1
 
                     # Collect attack paths that reached this host
@@ -217,8 +219,10 @@ class RiskScorer:
             total_attempts = total_blocked + sum(
                 v.get("bypassed", 0) for v in defense_val.values() if isinstance(v, dict)
             )
-            # We distribute this signal equally to all known hosts for simplicity
-            for ip in compromise_count:
+            # Distribute this signal only to hosts compromised in *this* report —
+            # not the cumulative compromise_count across all reports processed so far,
+            # which would leak this report's defense stats onto unrelated hosts.
+            for ip in report_compromised_ips:
                 host_defense_blocks[ip] += total_blocked
                 host_defense_attempts[ip] += total_attempts
 
