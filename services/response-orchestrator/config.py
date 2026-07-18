@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     wazuh_api_url: str = "https://wazuh-manager:55000"
     wazuh_api_username: str = "wazuh-wui"
     wazuh_api_password: str = ""
-    wazuh_api_verify_ssl: bool = False
+    wazuh_api_verify_ssl: bool = True  # set ORCHESTRATOR_WAZUH_API_VERIFY_SSL=false only for dev self-signed certs
 
     # Simulation Integration
     simulation_swarm_size: int = 50
@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     # Safety Limits
     max_concurrent_plans: int = 3
     critical_asset_always_requires_approval: bool = True
-    dry_run_mode: bool = False  # When true, no actions are actually executed
+    dry_run_mode: bool = True  # Global safety net: no actions are actually executed until explicitly disabled
 
     # Logging / Server
     log_level: str = "INFO"

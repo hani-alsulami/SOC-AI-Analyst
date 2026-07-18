@@ -106,6 +106,36 @@ def generate_all_credentials():
     print()
 
     # ========================================================================
+    # SOAR & Monitoring Credentials
+    # ========================================================================
+    print("## SOAR & MONITORING CREDENTIALS")
+    print("-" * 80)
+
+    credentials["MINIO_ROOT_USER"] = "minioadmin"
+    credentials["MINIO_ROOT_PASSWORD"] = generate_password(32)
+    print(f"MinIO:")
+    print(f"  Username: {credentials['MINIO_ROOT_USER']}")
+    print(f"  Password: {credentials['MINIO_ROOT_PASSWORD']}")
+    print()
+
+    credentials["SHUFFLE_ENCRYPTION_MODIFIER"] = generate_base64_key(32)
+    print(f"Shuffle Encryption Modifier:")
+    print(f"  {credentials['SHUFFLE_ENCRYPTION_MODIFIER']}")
+    print()
+
+    credentials["OPENSEARCH_PASSWORD"] = generate_password(32)
+    print(f"OpenSearch (Shuffle):")
+    print(f"  Password: {credentials['OPENSEARCH_PASSWORD']}")
+    print()
+
+    credentials["GRAFANA_ADMIN_USER"] = "admin"
+    credentials["GRAFANA_ADMIN_PASSWORD"] = generate_password(32)
+    print(f"Grafana:")
+    print(f"  Username: {credentials['GRAFANA_ADMIN_USER']}")
+    print(f"  Password: {credentials['GRAFANA_ADMIN_PASSWORD']}")
+    print()
+
+    # ========================================================================
     # JWT & API Keys
     # ========================================================================
     print("## API SECURITY")
@@ -204,6 +234,14 @@ def write_env_file(credentials, output_path=".env.production"):
         f.write("# Redis Credentials\n")
         f.write(f"REDIS_PASSWORD={credentials['REDIS_PASSWORD']}\n")
         f.write("REDIS_PORT=6379\n\n")
+
+        f.write("# SOAR & Monitoring Credentials\n")
+        f.write(f"MINIO_ROOT_USER={credentials['MINIO_ROOT_USER']}\n")
+        f.write(f"MINIO_ROOT_PASSWORD={credentials['MINIO_ROOT_PASSWORD']}\n")
+        f.write(f"SHUFFLE_ENCRYPTION_MODIFIER={credentials['SHUFFLE_ENCRYPTION_MODIFIER']}\n")
+        f.write(f"OPENSEARCH_PASSWORD={credentials['OPENSEARCH_PASSWORD']}\n")
+        f.write(f"GRAFANA_ADMIN_USER={credentials['GRAFANA_ADMIN_USER']}\n")
+        f.write(f"GRAFANA_ADMIN_PASSWORD={credentials['GRAFANA_ADMIN_PASSWORD']}\n\n")
 
         f.write("# API Security\n")
         f.write(f"AISOC_JWT_SECRET_KEY={credentials['JWT_SECRET_KEY']}\n")

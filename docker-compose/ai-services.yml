@@ -163,7 +163,7 @@ services:
     environment:
       - POSTGRES_DB=ai_soc
       - POSTGRES_USER=ai_soc
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ai_soc_password}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see scripts/generate_secure_credentials.py)}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -194,7 +194,7 @@ services:
     ports:
       - "8400:8000"
     environment:
-      - FEEDBACK_DATABASE_URL=postgresql+asyncpg://ai_soc:${POSTGRES_PASSWORD:-ai_soc_password}@postgres:5432/ai_soc
+      - FEEDBACK_DATABASE_URL=postgresql+asyncpg://ai_soc:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/ai_soc
     networks:
       - ai-network
     depends_on:
@@ -226,7 +226,7 @@ services:
     ports:
       - "8600:8000"
     environment:
-      - CORRELATION_DATABASE_URL=postgresql+asyncpg://ai_soc:${POSTGRES_PASSWORD:-ai_soc_password}@postgres:5432/ai_soc
+      - CORRELATION_DATABASE_URL=postgresql+asyncpg://ai_soc:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/ai_soc
       - CORRELATION_SIMULATOR_OLLAMA_HOST=http://ollama:11434
       - CORRELATION_SIMULATOR_OLLAMA_MODEL=llama3.2:3b
       - CORRELATION_SIMULATOR_ENVIRONMENT_CONFIG=/app/config/default-environment.json
@@ -297,7 +297,7 @@ services:
     ports:
       - "8800:8000"
     environment:
-      - ORCHESTRATOR_DATABASE_URL=postgresql+asyncpg://ai_soc:${POSTGRES_PASSWORD:-ai_soc_password}@postgres:5432/ai_soc
+      - ORCHESTRATOR_DATABASE_URL=postgresql+asyncpg://ai_soc:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/ai_soc
       - ORCHESTRATOR_CORRELATION_ENGINE_URL=http://correlation-engine:8000
       - ORCHESTRATOR_SIMULATION_URL=http://correlation-engine:8000
       - ORCHESTRATOR_RAG_SERVICE_URL=http://rag-service:8000

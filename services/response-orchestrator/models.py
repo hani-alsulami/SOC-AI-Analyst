@@ -237,8 +237,8 @@ class TriggerPlanRequest(BaseModel):
     environment_json: Optional[Dict[str, Any]] = Field(
         None, description="Custom environment (uses default if omitted)"
     )
-    auto_execute: bool = Field(True, description="Allow auto-execution of safe actions")
-    dry_run: bool = Field(False, description="Simulate without executing")
+    auto_execute: bool = Field(False, description="Allow auto-execution of safe actions")
+    dry_run: bool = Field(True, description="Simulate without executing")
     skip_simulation: bool = Field(False, description="Skip simulation, plan from incident data only")
 
 

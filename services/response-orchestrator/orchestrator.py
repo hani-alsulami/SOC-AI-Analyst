@@ -156,7 +156,13 @@ class ResponseOrchestrator:
         ]
         if pending_approval:
             plan.status = PlanStatus.AWAITING_APPROVAL
-        elif all(a.status in (ActionStatus.COMPLETED, ActionStatus.SKIPPED) for a in plan.actions):
+        elif all(
+            a.status in (
+                ActionStatus.COMPLETED, ActionStatus.FAILED,
+                ActionStatus.SKIPPED, ActionStatus.VETOED,
+            )
+            for a in plan.actions
+        ):
             plan.status = PlanStatus.VERIFYING
             # Start async verification
             asyncio.create_task(self._verify_and_complete(plan))
