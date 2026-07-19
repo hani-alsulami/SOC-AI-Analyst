@@ -1,0 +1,7 @@
+cortexutils==2.2.1
+requests==2.32.3
+python-magic==0.4.27
+thehive4py==1.8.2
+numpy>=1.24.0
+scikit-learn==1.7.2
+xgboost==3.2.0

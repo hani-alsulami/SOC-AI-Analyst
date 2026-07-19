@@ -10,7 +10,7 @@ This is a variant of the main [AI-SOC](../README.md) project, re-targeted at an 
 - Cortex keeps doing enrichment exactly like it does today (existing analyzers, untouched).
 - This project adds three things *on top*, all installed on the existing Cortex host:
   - **AI-SOC Triage Analyzer** — LLM-based severity/MITRE assessment, run on a case (via a case-ID observable, since TheHive 3.x has no whole-case analyzer trigger). RAG context is a planned enhancement, not wired up yet.
-  - **AI-SOC IDS Analyzer** — ML classification (BENIGN/ATTACK) for network-flow observables.
+  - **AI-SOC IDS Analyzer** — ML classification (BENIGN/ATTACK) for network-flow observables. Working code, but needs real flow data to be trustworthy — see its README's warning before enabling it.
   - **AI-SOC Responder** — D3FEND-mapped response actions (firewall/EDR/identity), analyst-triggered only. No automatic execution, ever.
 - A small **Correlation Service** polls TheHive's API for new/updated cases, builds a kill-chain/risk view across them, and writes it back as a case custom field or comment.
 
@@ -70,7 +70,7 @@ flowchart TB
 | Component | Status | Notes |
 |---|---|---|
 | AI-SOC Triage Analyzer | Implemented (v1) | [`analyzers/AI_SOC_Triage`](analyzers/AI_SOC_Triage) — LLM severity/MITRE triage, tested against mocked TheHive + Ollama. RAG context not wired up yet (see its README's Known Limitations). |
-| AI-SOC IDS Analyzer | Planned | Adapts `ml_training/inference_api.py` |
+| AI-SOC IDS Analyzer | Implemented (v1), **not recommended for production yet** | [`analyzers/AI_SOC_IDS`](analyzers/AI_SOC_IDS) — code works and is tested against the real trained models, but without real flow data the heuristic features don't carry enough signal: testing confirmed a known-malicious case still classifies BENIGN. See its README before enabling it. |
 | Correlation Service | Planned | Adapts `correlation-engine`; polls TheHive 3.x API today, webhook-ready for a future TheHive 4/5 upgrade |
 | AI-SOC Responder | Planned | Adapts `response-orchestrator`'s D3FEND mapping; firewall/EDR/identity adapters remain stubs until real vendor integrations are wired in |
 | ArcSight → TheHive bridge | Not needed | Existing push script already handles this |

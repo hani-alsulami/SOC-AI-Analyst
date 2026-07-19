@@ -1,0 +1,49 @@
+{
+  "name": "AI_SOC_IDS",
+  "version": "1.0",
+  "author": "SOC-AI-Analyst",
+  "url": "https://github.com/hani-alsulami/SOC-AI-Analyst/tree/main/cortex-integration/analyzers/AI_SOC_IDS",
+  "license": "Apache-2.0",
+  "description": "ML-based BENIGN/ATTACK classification for a TheHive case, using local CICIDS2017-trained models only. Heuristic feature extraction from case metadata unless real flow data is present — see README for the confidence caveat.",
+  "dataTypeList": ["other"],
+  "command": "AI_SOC_IDS/ai_soc_ids.py",
+  "baseConfig": "AI_SOC_IDS",
+  "config": {
+    "check_tlp": false,
+    "max_tlp": 3,
+    "check_pap": false,
+    "max_pap": 3,
+    "auto_extract": false
+  },
+  "configurationItems": [
+    {
+      "name": "thehive_url",
+      "description": "Base URL of the TheHive instance, e.g. http://thehive:9000",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "thehive_apikey",
+      "description": "TheHive API key used to fetch case details",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "models_path",
+      "description": "Directory containing random_forest_ids.pkl, scaler.pkl, label_encoder.pkl, feature_names.pkl (copied from the main AI-SOC project's models/ directory)",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "model_name",
+      "description": "Which trained model to use",
+      "type": "string",
+      "multi": false,
+      "required": false,
+      "defaultValue": "random_forest"
+    }
+  ]
+}
