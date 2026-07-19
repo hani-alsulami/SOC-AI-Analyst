@@ -1,0 +1,41 @@
+{
+  "name": "AI_SOC_Responder",
+  "version": "1.0",
+  "author": "SOC-AI-Analyst",
+  "url": "https://github.com/hani-alsulami/SOC-AI-Analyst/tree/main/cortex-integration/responders/AI_SOC_Responder",
+  "license": "Apache-2.0",
+  "description": "Proposes D3FEND-mapped response actions for a TheHive case based on its mitre:Txxxx tags. Never executes anything automatically — firewall/EDR/identity adapters are not wired to real systems yet. Analyst-triggered only, by design.",
+  "dataTypeList": ["thehive:case", "other"],
+  "command": "AI_SOC_Responder/ai_soc_responder.py",
+  "baseConfig": "AI_SOC_Responder",
+  "config": {
+    "check_tlp": false,
+    "max_tlp": 3,
+    "check_pap": false,
+    "max_pap": 3
+  },
+  "configurationItems": [
+    {
+      "name": "thehive_url",
+      "description": "Base URL of the TheHive instance, e.g. http://thehive:9000",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "thehive_apikey",
+      "description": "TheHive API key. Needs case-fetch access, and task/task-log write access if write_back_to_case is enabled.",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "write_back_to_case",
+      "description": "If true, create a task + task log on the case with the proposed plan, in addition to the Cortex report.",
+      "type": "boolean",
+      "multi": false,
+      "required": false,
+      "defaultValue": true
+    }
+  ]
+}

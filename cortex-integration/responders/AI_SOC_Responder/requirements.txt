@@ -1,0 +1,4 @@
+cortexutils==2.2.1
+requests==2.32.3
+python-magic==0.4.27
+thehive4py==1.8.2
