@@ -73,6 +73,7 @@ flowchart TB
 | AI-SOC IDS Analyzer | Implemented (v1), **not recommended for production yet** | [`analyzers/AI_SOC_IDS`](analyzers/AI_SOC_IDS) — code works and is tested against the real trained models, but without real flow data the heuristic features don't carry enough signal: testing confirmed a known-malicious case still classifies BENIGN. See its README before enabling it. |
 | Correlation Service | Planned | Adapts `correlation-engine`; polls TheHive 3.x API today, webhook-ready for a future TheHive 4/5 upgrade |
 | AI-SOC Responder | Implemented (v1) | [`responders/AI_SOC_Responder`](responders/AI_SOC_Responder) — reads `mitre:Txxxx` case tags, proposes D3FEND-mapped actions, optionally writes the plan back as a case task. Tested end-to-end (proposal, no-tags case, write-back). Never executes anything — proposal only, by design, since adapters remain stubs. |
+| AI-SOC Block Ticket Responder | Implemented (v1), **Jira only** | [`responders/AI_SOC_Block_Ticket`](responders/AI_SOC_Block_Ticket) — one-click-from-observable workflow: files a Jira ticket for an IP block request (tested against a mocked Jira, high confidence). Anomali ThreatStream submission is a documented stub — no verified API reference was available; see its README for what's needed to finish it. |
 | ArcSight → TheHive bridge | Not needed | Existing push script already handles this |
 
 ## Environment

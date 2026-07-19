@@ -1,0 +1,115 @@
+{
+  "name": "AI_SOC_Block_Ticket",
+  "version": "1.0",
+  "author": "SOC-AI-Analyst",
+  "url": "https://github.com/hani-alsulami/SOC-AI-Analyst/tree/main/cortex-integration/responders/AI_SOC_Block_Ticket",
+  "license": "Apache-2.0",
+  "description": "One-click IP block workflow: files a Jira ticket for the block request. Anomali ThreatStream submission is a documented stub pending a verified API reference — see README before enabling it.",
+  "dataTypeList": ["ip"],
+  "command": "AI_SOC_Block_Ticket/ai_soc_block_ticket.py",
+  "baseConfig": "AI_SOC_Block_Ticket",
+  "config": {
+    "check_tlp": false,
+    "max_tlp": 3,
+    "check_pap": false,
+    "max_pap": 3
+  },
+  "configurationItems": [
+    {
+      "name": "jira_url",
+      "description": "Base URL of your Jira instance, e.g. https://yourorg.atlassian.net",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "jira_api_version",
+      "description": "\"2\" (Server/DC, or older Cloud) or \"3\" (Cloud — uses Atlassian Document Format for description)",
+      "type": "string",
+      "multi": false,
+      "required": false,
+      "defaultValue": "2"
+    },
+    {
+      "name": "jira_auth_type",
+      "description": "\"basic\" (email + API token, typical for Jira Cloud) or \"bearer\" (personal access token, typical for Server/DC)",
+      "type": "string",
+      "multi": false,
+      "required": false,
+      "defaultValue": "basic"
+    },
+    {
+      "name": "jira_username",
+      "description": "Required if jira_auth_type is \"basic\" — usually your Jira account email",
+      "type": "string",
+      "multi": false,
+      "required": false
+    },
+    {
+      "name": "jira_api_token",
+      "description": "API token (basic auth) or personal access token (bearer auth)",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "jira_project_key",
+      "description": "Jira project key to create the ticket in, e.g. SOC",
+      "type": "string",
+      "multi": false,
+      "required": true
+    },
+    {
+      "name": "jira_issue_type",
+      "description": "Issue type name, e.g. Task, Incident",
+      "type": "string",
+      "multi": false,
+      "required": false,
+      "defaultValue": "Task"
+    },
+    {
+      "name": "jira_custom_fields_json",
+      "description": "Optional JSON object mapping Jira custom field IDs to values. Supports {ip} and {case_id} placeholders, e.g. {\"customfield_10050\": \"{ip}\"}",
+      "type": "string",
+      "multi": false,
+      "required": false,
+      "defaultValue": "{}"
+    },
+    {
+      "name": "anomali_enabled",
+      "description": "Leave false until the Anomali ThreatStream API call has been verified against your tenant — see README. When false, the responder still files the Jira ticket and reports anomali_status: not_implemented.",
+      "type": "boolean",
+      "multi": false,
+      "required": false,
+      "defaultValue": false
+    },
+    {
+      "name": "anomali_api_url",
+      "description": "Not used yet — reserved for when the Anomali integration is implemented",
+      "type": "string",
+      "multi": false,
+      "required": false
+    },
+    {
+      "name": "anomali_username",
+      "description": "Not used yet — reserved for when the Anomali integration is implemented",
+      "type": "string",
+      "multi": false,
+      "required": false
+    },
+    {
+      "name": "anomali_api_key",
+      "description": "Not used yet — reserved for when the Anomali integration is implemented",
+      "type": "string",
+      "multi": false,
+      "required": false
+    },
+    {
+      "name": "anomali_list_id",
+      "description": "Not used yet — reserved for when the Anomali integration is implemented",
+      "type": "string",
+      "multi": false,
+      "required": false
+    }
+  ]
+}
